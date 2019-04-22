@@ -18,6 +18,12 @@ public class MyTest16 extends ClassLoader {
 
   private final String fileExtension = ".class";
 
+  private String path;
+
+  public void setPath(String path) {
+    this.path = path;
+  }
+
   public MyTest16(String classLoaderName) {
     //将系统类加载器当作该类加载器的父加载器
     super();
@@ -35,9 +41,10 @@ public class MyTest16 extends ClassLoader {
     return "[" + this.classLoaderName + "]";
   }
 
-
   @Override
   public Class<?> findClass(String name) {
+    System.out.println("find class invoked : " + name);
+    System.out.println("class loader name : " + this.classLoaderName);
     byte[] data = loadClassData(name);
     return this.defineClass(name, data, 0, data.length);
   }
@@ -49,10 +56,12 @@ public class MyTest16 extends ClassLoader {
     byte[] data = null;
     ByteArrayOutputStream baos = null;
 
-    try {
-      this.classLoaderName = this.classLoaderName.replace(".", "/");
+    //classLoaderName = classLoaderName.replaceAll(".", "/");
 
-      in = new FileInputStream(new File(name + this.fileExtension));
+    try {
+      name = name.replace(".", "/");
+      String filePath = this.path + name + this.fileExtension;
+      in = new FileInputStream(new File(filePath));
       baos = new ByteArrayOutputStream();
 
       int ch = 0;
@@ -66,8 +75,14 @@ public class MyTest16 extends ClassLoader {
     } finally {
 
       try {
-        in.close();
-        baos.close();
+        if (in != null) {
+          in.close();
+        }
+        if (baos != null) {
+          baos.close();
+
+        }
+
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -76,19 +91,41 @@ public class MyTest16 extends ClassLoader {
     return data;
   }
 
-  public static void test(ClassLoader classLoader)
-      throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-    Class<?> aClass = classLoader
-        .loadClass("com.jvm.classloader.Child");
-
-    Object o = aClass.newInstance();
-    System.out.println(o);
-
-  }
-
   public static void main(String[] args)
       throws IllegalAccessException, InstantiationException, ClassNotFoundException {
-    MyTest16 myTest16 = new MyTest16("loader1");
-    test(myTest16);
+
+    //由于双亲委派机制，并没有使用自定义的类加载器加载
+    //因为class文件在classpath路径下
+//    MyTest16 loader = new MyTest16("loader1");
+//    loader.setPath("/Users/calabash/Desktop/代码/jvm/target/classes/");
+//
+//    Class<?> clazz = loader
+//        .loadClass("com.jvm.classloader.MyTest1");
+//    Object o = clazz.newInstance();
+//
+//    System.out.println("clazz : " + clazz.hashCode());
+//    System.out.println(o.getClass().getClassLoader());
+
+    //classpath下无法加载，使用自定义类加载器
+    MyTest16 loader1 = new MyTest16("loader1");
+    loader1.setPath("/Users/calabash/Desktop/classes/");
+
+    Class<?> clazz1 = loader1
+        .loadClass("com.jvm.classloader.MyTest1");
+    Object o1 = clazz1.newInstance();
+
+    System.out.println("clazz1 : " + clazz1.hashCode());
+    System.out.println(o1.getClass().getClassLoader());
+
+    //已经有了父类加载器，不用自定义加载器加载class
+    MyTest16 loader3 = new MyTest16(loader1, "loader2");
+    loader3.setPath("/Users/calabash/Desktop/classes/");
+
+    Class<?> clazz3 = loader1
+        .loadClass("com.jvm.classloader.MyTest1");
+    Object o3 = clazz1.newInstance();
+
+    System.out.println("clazz3 : " + clazz1.hashCode());
+    System.out.println(o3.getClass().getClassLoader());
   }
 }
