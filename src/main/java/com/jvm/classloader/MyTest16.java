@@ -36,10 +36,10 @@ public class MyTest16 extends ClassLoader {
     this.classLoaderName = classLoaderName;
   }
 
-  @Override
-  public String toString() {
-    return "[" + this.classLoaderName + "]";
-  }
+//  @Override
+//  public String toString() {
+//    return "[" + this.classLoaderName + "]";
+//  }
 
   @Override
   public Class<?> findClass(String name) {
@@ -118,14 +118,37 @@ public class MyTest16 extends ClassLoader {
     System.out.println(o1.getClass().getClassLoader());
 
     //已经有了父类加载器，不用自定义加载器加载class
-    MyTest16 loader3 = new MyTest16(loader1, "loader2");
+//    MyTest16 loader2 = new MyTest16(loader1, "loader2");
+//    loader2.setPath("/Users/calabash/Desktop/classes/");
+//
+//    Class<?> clazz2 = loader1
+//        .loadClass("com.jvm.classloader.MyTest1");
+//    Object object2 = clazz1.newInstance();
+//
+//    System.out.println("clazz3 : " + clazz1.hashCode());
+//    System.out.println(object2.getClass().getClassLoader());
+
+    //命名空间不同，创建新对象
+    MyTest16 loader3 = new MyTest16("loader3");
     loader3.setPath("/Users/calabash/Desktop/classes/");
 
-    Class<?> clazz3 = loader1
+    Class<?> clazz3 = loader3
         .loadClass("com.jvm.classloader.MyTest1");
-    Object o3 = clazz1.newInstance();
+    Object o3 = clazz3.newInstance();
 
-    System.out.println("clazz3 : " + clazz1.hashCode());
+    System.out.println("clazz3 : " + clazz3.hashCode());
     System.out.println(o3.getClass().getClassLoader());
+
+
+    //-Xlog:class+unload=info
+    //追踪类的卸载
+    loader3 = null;
+    clazz3 = null;
+    o3 = null;
+
+    System.gc();
+
+    //输出
+    // [0.209s][info][class,unload] unloading class com.jvm.classloader.MyTest1 0x00000007c0073828
   }
 }
